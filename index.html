@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ramadan Countdown</title>
+    <link rel="icon" href="icon-512x512.png" type="image/x-icon">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: url('https://images.unsplash.com/photo-1519818187420-8e49de7adeef?q=80&w=1683&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            overflow: hidden;
+            transition: background 0.5s ease;
+            font-family: 'Arial', sans-serif;
+        }
+        .dark-mode {
+            background: linear-gradient(180deg, #ffffff, #cccccc);
+            color: black;
+        }
+        .overlay {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(255, 215, 0, 0.5);
+            max-width: 100%;
+            overflow-y: auto;
+            max-height: 80vh;
+            opacity: 0;
+            animation: fadeIn 2s forwards;
+        }
+        .timer {
+            font-size: 2rem;
+            background: rgba(255, 215, 0, 0.3);
+            color: gold;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: 2px solid gold;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+            animation: slideUp 1s ease-out;
+        }
+        .button {
+            background-color: #ffd700;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            transition: background-color 0.3s, transform 0.3s;
+            animation: bounce 1s ease-in-out infinite;
+        }
+        .button:hover {
+            background-color: #ffcc00;
+            transform: scale(1.1);
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: #FFD700;
+            animation: fadeInText 2s ease-in-out;
+        }
+        .dua {
+            font-size: 1.25rem;
+            color: #FFD700;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        /* Footer Styling */
+        footer {
+            background-color: #111;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            font-size: 0.9rem;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            animation: fadeInFooter 2s ease-in-out;
+        }
+        footer a {
+            color: #ffd700;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        footer p {
+            color: #ffd700;
+        }
+        /* Animations */
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        @keyframes fadeInText {
+            0% { opacity: 0; transform: translateY(-20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        @keyframes fadeInFooter {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen text-center p-6">
+    <div class="overlay max-w-lg w-full">
+        <h1 class="text-4xl font-bold text-yellow-400 mb-4">🌙 رمضان مبارك</h1>
+        <p id="hijri-date" class="text-lg text-gray-300"></p>
+        <p class="dua" id="daily-dua">Loading Dua...</p>
+        <div id="countdown" class="timer my-6"></div>
+        <div class="mt-6 w-full">
+            <input id="city" type="text" placeholder="Enter city" class="p-3 rounded w-full text-black mb-3">
+            <input id="country" type="text" placeholder="Enter country" class="p-3 rounded w-full text-black mb-3">
+            <button onclick="fetchPrayerTimes()" class="button w-full">
+                Get Prayer Times
+            </button>
+        </div>
+        <div id="prayerTimes" class="mt-6 text-lg text-gray-200"></div>
+    </div>
+    <footer>
+        <p>&copy; 2025 Ramadan Countdown | All Rights Reserved</p>
+        <p>Developed with ❤️ by Abdul-Quddus</p>
+    </footer>
+    <script>
+        const RAMADAN_START = new Date("March 1, 2025 00:00:00").getTime();
+        const RAMADAN_END = new Date("March 30, 2025 23:59:59").getTime();
+        const duas = [
+            "اللهم بلغنا رمضان", 
+            "اللهم تقبل منا صيامنا وقيامنا", 
+            "اللهم اجعل رمضان هذا مغفرة لنا", 
+            "اللهم ارزقنا ليلة القدر"
+        ];
+
+        function updateCountdown() {
+            let now = new Date().getTime();
+            let distance, message;
+            if (now < RAMADAN_START) {
+                distance = RAMADAN_START - now;
+                message = "Countdown to Ramadan Start 🌙";
+            } else {
+                distance = RAMADAN_END - now;
+                message = "Ramadan Ends In 🕌";
+            }
+            let days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            document.getElementById("countdown").innerHTML = `${message} <br> ⏳ ${days}d ${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        setInterval(updateCountdown, 1000);
+
+        function fetchPrayerTimes() {
+            let city = document.getElementById("city").value;
+            let country = document.getElementById("country").value;
+            if (!city || !country) {
+                alert("Please enter both city and country");
+                return;
+            }
+            fetch(`https://api.aladhan.com/v1/timingsByCity?city=${city}&country=${country}&method=2`)
+                .then(response => response.json())
+                .then(data => {
+                    let timings = data.data.timings;
+                    document.getElementById("prayerTimes").innerHTML = ` 
+                        <p>🌙 Suhoor (Imsak): <span class="text-yellow-400 font-bold">${timings.Imsak}</span></p>
+                        <p>🌅 Iftar (Maghrib): <span class="text-yellow-400 font-bold">${timings.Maghrib}</span></p>`;
+                })
+                .catch(error => alert("Error fetching prayer times"));
+        }
+
+        function updateDua() {
+            let randomIndex = Math.floor(Math.random() * duas.length);
+            document.getElementById("daily-dua").innerText = duas[randomIndex];
+        }
+
+        async function fetchHijriDate() {
+            let response = await fetch("https://api.aladhan.com/v1/gToH?date=1-3-2025");
+            let data = await response.json();
+            document.getElementById("hijri-date").innerText = `📅 Hijri Date: ${data.data.hijri.date}`;
+        }
+
+        window.onload = function() {
+            updateDua();
+            fetchHijriDate();
+            updateCountdown();
+        };
+    </script>
+    <script>
+        // Register the service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('service-worker.js').then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
